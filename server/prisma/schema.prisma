@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CREATOR
+  CONTESTEE
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String?
+  email         String
+  password_hash String
+  role          Role     @default(CONTESTEE)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  contests Contest[]
+
+  mcqSubmissions McqSubmission[]
+  dsaSubmissions DsaSubmission[]
+}
+
+// CREATE TABLE contests (
+// id,
+// title,
+// description,
+// creator_id,
+// start_time,
+// end_time,
+// created_at
+// );
+
+model Contest {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  creator_id  String
+
+  user User @relation(fields: [creator_id], references: [id])
+
+  mcq_questions McqQuestion[]
+  dsa_problems  DsaProblem[]
+
+  start_time DateTime
+  end_time   DateTime
+  creatd_at  DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// CREATE TABLE mcq_questions (
+// id,
+// contest_id,
+// question_text,
+// options //JSONB ??,
+// correct_option_index,
+// points //default 1,
+// created_at
+// );
+
+model McqQuestion {
+  id String @id @default(uuid())
+
+  contest_id String
+
+  contest Contest @relation(fields: [contest_id], references: [id])
+
+  mcq_submissions      McqSubmission[]
+  question_text        String
+  options              Json
+  correct_option_index Int
+  points               Int             @default(1)
+  created_at           DateTime        @default(now())
+}
+
+// CREATE TABLE dsa_problems (
+// id,
+// contest_id,
+// title,
+// description,
+// tags // JSONB ??,
+// points //default 100,
+// time_limit // default 2000,
+// memory_limit // deafult 256,
+// created_at
+// );
+
+model DsaProblem {
+  id         String @id @default(uuid())
+  contest_id String
+
+  contest Contest @relation(fields: [contest_id], references: [id])
+
+  test_cases TestCases[]
+
+  submissions DsaSubmission[]
+
+  title        String
+  description  String
+  tags         Json
+  points       Int      @default(100)
+  time_limit   Int      @default(2000)
+  memory_limit Int      @default(256)
+  created_at   DateTime @default(now())
+}
+
+// CREATE TABLE test_cases (
+// id,
+// problem_id,
+// input,
+// expected_output,
+// is_hidden //default false,
+// created_at
+// );
+
+model TestCases {
+  id         String @id @default(uuid())
+  problem_id String
+
+  dsa_problem DsaProblem @relation(fields: [problem_id], references: [id])
+
+  input           String
+  expected_output String
+  is_hidden       Boolean  @default(false)
+  created_at      DateTime @default(now())
+}
+
+// CREATE TABLE mcq_submissions (
+// id,
+// user_id,
+// question_id,
+// selected_option_index,
+// is_correct ,
+// points_earned // default 0,
+// submitted_at,
+// UNIQUE(user_id, question_id)
+// );
+
+model McqSubmission {
+  id      String @id @default(uuid())
+  user_id String
+
+  user User @relation(fields: [user_id], references: [id])
+
+  question_id String
+
+  mcq_question McqQuestion @relation(fields: [question_id], references: [id])
+
+  selected_option_index Int      @default(0)
+  is_correct            Boolean
+  points_earned         Int      @default(0)
+  submitted_at          DateTime @default(now())
+
+  @@unique([user_id, question_id])
+}
+
+// CREATE TABLE dsa_submissions (
+// id,
+// user_id,
+// problem_id,
+// code TEXT NOT NULL,
+// language VARCHAR(50),
+// status VARCHAR(50),
+// points_earned // default 0,
+// test_cases_passed // default 0,
+// total_test_cases // default 0,
+// execution_time INTEGER,
+// submitted_at
+// );
+
+model DsaSubmission {
+  id      String @id @default(uuid())
+  user_id String
+
+  user User @relation(fields: [user_id], references: [id])
+
+  problem_id    String
+  problem       DsaProblem @relation(fields: [problem_id], references: [id])
+  code          String
+  language      String
+  status        String
+  points_earned Int        @default(0)
+  test_cases    Int        @default(0)
+
+  execution_time Int
+  submitted_at   DateTime @default(now())
+}
