@@ -5,8 +5,7 @@ import type {
   ApiErrorResponse,
   ApiSuccessResponse,
 } from "@/lib/api-response-types";
-import { e2bCodeExecuter } from "@/utils/executer";
-import { send } from "@/ws";
+import { processSubmission } from "@/utils/process-submission";
 import { PrismaPg } from "@prisma/adapter-pg";
 import express from "express";
 
@@ -137,29 +136,22 @@ router.post("/:problemId/submit", contesteeRoleMiddleware, async (req, res) => {
     }
 
     const { code, language } = checkFormat.data;
+    const userId = req.user_id!;
 
-    const testCases = await prisma.testCases.findMany({
-      where: { problem_id: problemId },
-    });
-
-    const result = await e2bCodeExecuter({
+    processSubmission({
+      userId,
+      problemId,
       code,
       language,
-      testCases,
-      timeLimitMs: problem.time_limit,
+      problemPoints: problem.points,
+      timeLimit: problem.time_limit,
     });
-
-    const pointsEarned = Math.floor(
-      (result.testCasesPassed / result.total) * problem.points
-    );
 
     return res.status(201).json({
       success: true,
       data: {
-        status: result.status,
-        pointsEarned,
-        testCasesPassed: result.testCasesPassed,
-        totalTestCases: result.total,
+        status: "Pending",
+        pointsEarned: 0,
       },
       error: null,
     } satisfies ApiSuccessResponse);

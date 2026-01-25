@@ -1,8 +1,11 @@
 import type { TYPE_LANGUAGES } from "@/common/language-types";
 import type { TestCases } from "@/generated/prisma/client";
+import type { WsResponse } from "@/lib/api-response-types";
 import { Sandbox } from "@e2b/code-interpreter";
+import { send } from "@/ws";
 
 interface e2bCodeExecuterProps {
+  userId: string;
   code: string;
   language: TYPE_LANGUAGES;
   testCases: TestCases[];
@@ -10,6 +13,7 @@ interface e2bCodeExecuterProps {
 }
 
 export async function e2bCodeExecuter({
+  userId,
   code,
   language,
   testCases,
@@ -67,15 +71,20 @@ export async function e2bCodeExecuter({
       const result = await handle.wait();
 
       if (result.exitCode !== 0) {
+        send(userId, "submission:update", {
+          status: "RUNTIME_ERROR",
+          testCasesPassed,
+          totalTestCases: testCases.length,
+        } satisfies WsResponse);
+
         return {
           testCasesPassed,
-          total: testCases.length,
-          status: "Runtime Error",
+          totalTestCases: testCases.length,
+          status: "RUNTIME_ERROR",
           input: tc.input,
           output: result.stderr,
           expected: tc.expected_output.trim(),
-          passed: false,
-        };
+        } satisfies WsResponse;
       }
 
       const output = result.stdout.trim();
@@ -83,32 +92,48 @@ export async function e2bCodeExecuter({
       const ok = output === expected;
 
       if (!ok) {
-        return {
+        send(userId, "submission:update", {
+          status: "WRONG_ANSWER",
           testCasesPassed,
-          total: testCases.length,
-          status: "Wrong Answer",
+          totalTestCases: testCases.length,
+        } satisfies WsResponse);
+
+        return {
+          status: "WRONG_ANSWER",
+          testCasesPassed,
+          totalTestCases: testCases.length,
           input: tc.input,
           output,
           expected,
-          passed: false,
-        };
+        } satisfies WsResponse;
       }
 
       testCasesPassed++;
+
+      send(userId, "submission:update", {
+        status: "RUNNING",
+        testCasesPassed,
+        totalTestCases: testCases.length,
+      } satisfies WsResponse);
     }
 
     return {
+      status: "ACCEPTED",
       testCasesPassed,
-      total: testCases.length,
-      status: "Accepted",
-    };
+      totalTestCases: testCases.length,
+    } satisfies WsResponse;
   } catch (error) {
-    return {
+    send(userId, "submission:update", {
+      status: "ERROR",
       testCasesPassed: 0,
-      total: testCases.length,
-      status: "Error",
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
+      totalTestCases: testCases.length,
+    } satisfies WsResponse);
+
+    return {
+      status: "ERROR",
+      testCasesPassed: 0,
+      totalTestCases: testCases.length,
+    } satisfies WsResponse;
   } finally {
     if (sandbox) {
       await sandbox.kill();
