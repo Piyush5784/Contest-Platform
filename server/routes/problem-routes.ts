@@ -6,6 +6,7 @@ import type {
   ApiSuccessResponse,
 } from "@/lib/api-response-types";
 import { e2bCodeExecuter } from "@/utils/executer";
+import { send } from "@/ws";
 import { PrismaPg } from "@prisma/adapter-pg";
 import express from "express";
 

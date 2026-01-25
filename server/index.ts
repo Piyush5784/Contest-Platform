@@ -11,7 +11,6 @@ const app = express();
 const httpServer = createServer(app);
 
 setupSocketIO(httpServer);
-
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
