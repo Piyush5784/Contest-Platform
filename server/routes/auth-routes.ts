@@ -1,5 +1,8 @@
 import { PrismaClient, Role } from "@/generated/prisma/client";
-import type { ApiErrorResponse, ApiSuccessResponse } from "@/lib/types";
+import type {
+  ApiErrorResponse,
+  ApiSuccessResponse,
+} from "@/lib/api-response-types";
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -46,7 +49,7 @@ router.post("/login", async (req, res) => {
     );
 
     if (!checkPassword) {
-    return res.status(401).json({
+      return res.status(401).json({
         success: false,
         data: null,
         error: "INVALID_CREDENTIALS",

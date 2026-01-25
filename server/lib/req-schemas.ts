@@ -1,3 +1,4 @@
+import { LANGUAGES } from "@/common/language-types";
 import { Role } from "@/generated/prisma/enums";
 import z from "zod";
 
@@ -47,7 +48,7 @@ export const createDsaQuestionSchema = z.object({
 
 export const submitDsaProblemSchema = z.object({
   code: z.string().nonempty(),
-  language: z.string(),
+  language: z.enum(LANGUAGES),
 });
 
 export const submitMcqSchema = z.object({

@@ -10,7 +10,10 @@ import {
   contesteeRoleMiddleware,
   creatorRoleMiddleware,
 } from "@/lib/role-middleware";
-import type { ApiErrorResponse, ApiSuccessResponse } from "@/lib/types";
+import type {
+  ApiErrorResponse,
+  ApiSuccessResponse,
+} from "@/lib/api-response-types";
 import { PrismaPg } from "@prisma/adapter-pg";
 import express from "express";
 

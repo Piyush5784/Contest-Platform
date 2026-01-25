@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ApiErrorResponse } from "@/lib/types";
+import type { ApiErrorResponse } from "@/lib/api-response-types";
 import { Role } from "@/generated/prisma/enums";
 
 export const creatorRoleMiddleware = (

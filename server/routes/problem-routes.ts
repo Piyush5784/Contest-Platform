@@ -1,7 +1,11 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { submitDsaProblemSchema } from "@/lib/req-schemas";
 import { contesteeRoleMiddleware } from "@/lib/role-middleware";
-import type { ApiErrorResponse, ApiSuccessResponse } from "@/lib/types";
+import type {
+  ApiErrorResponse,
+  ApiSuccessResponse,
+} from "@/lib/api-response-types";
+import { e2bCodeExecuter } from "@/utils/executer";
 import { PrismaPg } from "@prisma/adapter-pg";
 import express from "express";
 
@@ -133,26 +137,29 @@ router.post("/:problemId/submit", contesteeRoleMiddleware, async (req, res) => {
 
     const { code, language } = checkFormat.data;
 
-    // const pointsEarned = Math.floor((testCasesPassed / totalTestCases) * problemPoints)
-    // const createSubmission = await prisma.dsaSubmission.create({
-    //   data: {
-    //     code,
-    //     language,
-    //     execution_time: 90,
-    //     status: 34,
-    //   },
-    // });
+    const testCases = await prisma.testCases.findMany({
+      where: { problem_id: problemId },
+    });
 
-    const format = {
-      status: "accepted",
-      pointsEarned: 100,
-      testCasesPassed: 5,
-      totalTestCases: 5,
-    };
+    const result = await e2bCodeExecuter({
+      code,
+      language,
+      testCases,
+      timeLimitMs: problem.time_limit,
+    });
+
+    const pointsEarned = Math.floor(
+      (result.testCasesPassed / result.total) * problem.points
+    );
 
     return res.status(201).json({
       success: true,
-      data: format,
+      data: {
+        status: result.status,
+        pointsEarned,
+        testCasesPassed: result.testCasesPassed,
+        totalTestCases: result.total,
+      },
       error: null,
     } satisfies ApiSuccessResponse);
   } catch (error) {

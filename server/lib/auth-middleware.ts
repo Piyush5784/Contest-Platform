@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ApiErrorResponse } from "./types";
+import type { ApiErrorResponse } from "./api-response-types";
 import jwt from "jsonwebtoken";
 import type { Role } from "@/generated/prisma/enums";
 import { JWT_PASSWORD } from "@/config";
@@ -21,7 +21,7 @@ export const authMiddleware = async (
     }
 
     const token = authHeader?.split(" ")[1]!;
-  
+
     const checkPass = jwt.verify(token, JWT_PASSWORD) as {
       id: string;
       email: string;
