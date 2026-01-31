@@ -152,6 +152,7 @@ router.post("/:problemId/submit", contesteeRoleMiddleware, async (req, res) => {
       data: {
         status: "Pending",
         pointsEarned: 0,
+        totalTestCases: 0,
       },
       error: null,
     } satisfies ApiSuccessResponse);

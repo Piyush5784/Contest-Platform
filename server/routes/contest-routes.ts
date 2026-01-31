@@ -425,7 +425,7 @@ router.get("/:contestId/leaderboard", async (req, res) => {
   try {
     const user_id = req.user_id;
     const contestId = req.params.contestId;
-    console.log("1");
+
     if (!contestId) {
       return res.status(400).json({
         success: false,
@@ -439,7 +439,6 @@ router.get("/:contestId/leaderboard", async (req, res) => {
         id: contestId,
       },
     });
-    console.log("2");
 
     if (!contest) {
       return res.status(404).json({
@@ -513,7 +512,6 @@ router.get("/:contestId/leaderboard", async (req, res) => {
         rank: lastRank,
       };
     });
-    console.log("3");
 
     return res.json({
       success: true,
