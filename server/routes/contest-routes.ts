@@ -1,5 +1,4 @@
 import { PrismaClient } from "@/generated/prisma/client";
-import { authMiddleware } from "@/lib/auth-middleware";
 import {
   createContestSchema,
   createDsaQuestionSchema,
@@ -9,7 +8,7 @@ import {
 import {
   contesteeRoleMiddleware,
   creatorRoleMiddleware,
-} from "@/lib/role-middleware";
+} from "@/middleware/role-middleware";
 import type {
   ApiErrorResponse,
   ApiSuccessResponse,

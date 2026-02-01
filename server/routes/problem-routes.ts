@@ -1,6 +1,6 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { submitDsaProblemSchema } from "@/lib/req-schemas";
-import { contesteeRoleMiddleware } from "@/lib/role-middleware";
+import { contesteeRoleMiddleware } from "@/middleware/role-middleware";
 import type {
   ApiErrorResponse,
   ApiSuccessResponse,
