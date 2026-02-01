@@ -8,8 +8,8 @@ export const loginFormSchema = z.object({
 export const registerFormSchema = z
   .object({
     email: z.email(),
-    phone: z.string().optional(),
     password: z.string(),
+    name: z.string(),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -20,6 +20,7 @@ export const registerFormSchema = z
 export const accountSchema = z.object({
   name: z.string().min(2, "Name is required"),
 });
+
 export const passwordFormSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password required"),

@@ -1,17 +1,15 @@
-import { Plan, Purchase, User } from "@/generated/prisma/client";
+import { getErrorMessage } from "@/utils/format-response";
 
-export function ApiResponse<T = User | Plan | Purchase>({
-  msg,
-  success,
-  data,
-}: {
-  msg: string;
-  success: boolean;
-  data?: T;
-}) {
-  return {
-    message: msg,
-    success,
-    data,
-  };
-}
+export type ApiSuccessResponse<T = unknown> = {
+  success: true;
+  data: T;
+  error: null;
+};
+
+export type ApiErrorResponse = {
+  success: false;
+  data: null;
+  error: string;
+};
+
+export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;

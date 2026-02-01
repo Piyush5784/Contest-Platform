@@ -11,10 +11,13 @@ export const signInSchema = z.object({
   password: z.string(),
 });
 
-export const loginSchema = z.object({
-  email: z.email(),
-  password: z.string(),
-});
+export const signInSchemaGoogle = signInSchema
+  .pick({ name: true, email: true })
+  .extend({
+    image: z.string().optional(),
+  });
+
+export const loginSchema = signInSchema.pick({ email: true, password: true });
 
 export const createContestSchema = z.object({
   title: z.string().max(20),

@@ -1,8 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import prisma from "./prisma";
-import bcrypt from "bcryptjs";
+import axios from "axios";
+import { BACKEND_URL } from "../../../config";
+import { getErrorMessage, ReturnError } from "@/utils/format-response";
 
 export const AuthOptions: NextAuthOptions = {
   providers: [
@@ -14,39 +15,35 @@ export const AuthOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password is required");
+          throw new Error(
+            JSON.stringify({
+              error: "Email and password is required",
+              success: false,
+            }),
+          );
         }
 
-        const checkUser = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        try {
+          const res = await axios.post(`${BACKEND_URL}/api/auth/verify`, {
+            email: credentials.email,
+            password: credentials.password,
+          });
+          const response = res.data;
 
-        if (!checkUser) {
-          console.log("User not found");
-          throw new Error("User not Found");
+          const userData = response.data;
+
+          return {
+            id: userData.id.toString(),
+            email: userData.email,
+            name: userData.name,
+            image: userData.image,
+            role: userData.role,
+            provider: "CREDENTIALS",
+          };
+        } catch (err: any) {
+          const message = err?.response?.data?.error || "INVALID_CREDENTIALS";
+          throw new Error(getErrorMessage(message));
         }
-
-        if (checkUser.provider !== "CREDENTIALS" || !checkUser.passwordHash) {
-          console.log("Invalid Provider");
-          throw new Error("Please login with Google");
-        }
-
-        const passCheck = await bcrypt.compare(
-          credentials.password,
-          checkUser.passwordHash!
-        );
-
-        if (!passCheck) {
-          console.log("Invalid password");
-          throw new Error("Invalid password");
-        }
-
-        return {
-          id: checkUser.id.toString(),
-          email: checkUser.email,
-          name: checkUser.name,
-          provider: "CREDENTIALS",
-        };
       },
     }),
     Google({
@@ -60,25 +57,24 @@ export const AuthOptions: NextAuthOptions = {
         const email = user.email;
 
         if (!email) {
-          throw new Error(
-            JSON.stringify({ error: "Invalid email", status: false })
-          );
+          throw new Error("Invalid Email");
         }
-
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-
-        if (!existingUser) {
-          await prisma.user.create({
-            data: {
-              email,
-              image: user.image as string,
-              name: user.name as string,
-              provider: "GOOGLE",
-            },
+        try {
+          const res = await axios.post(`${BACKEND_URL}/api/auth/google`, {
+            email: user.email,
+            name: user.name,
+            image: user.image,
           });
-        }
+          const userData = res.data.data;
 
-        return true;
+          user.id = userData.id;
+          user.role = userData.role;
+          user.provider = "GOOGLE";
+
+          return true;
+        } catch (error) {
+          throw new Error(ReturnError(error));
+        }
       }
       return true;
     },
@@ -88,6 +84,7 @@ export const AuthOptions: NextAuthOptions = {
       session.user.image = token.picture as string;
       session.user.provider = token.provider as string;
       session.user.name = token.name as string;
+      session.user.role = token.role as string;
       return session;
     },
     async jwt({ token, user }) {
@@ -97,6 +94,7 @@ export const AuthOptions: NextAuthOptions = {
         token.picture = user.image?.toString();
         token.provider = user.provider?.toString();
         token.name = user.name?.toString();
+        token.role = user.role;
       }
       return token;
     },

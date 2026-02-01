@@ -23,7 +23,7 @@ import {
   passwordFormSchema,
   PasswordFormType,
 } from "@/lib/validation-schemas";
-import { updateUserName, updateUserPassword } from "./action";
+import { updateUserName, updateUserPassword } from "./query";
 import { toast } from "sonner";
 
 const AccountPage = () => {

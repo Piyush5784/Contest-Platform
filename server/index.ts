@@ -6,12 +6,19 @@ import { PORT } from "./config";
 import { authMiddleware } from "./lib/auth-middleware";
 import { problemRoutes } from "./routes/problem-routes";
 import { setupSocketIO } from "./ws";
+import cors from "cors";
 
 const app = express();
 const httpServer = createServer(app);
 
 setupSocketIO(httpServer);
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/contests", authMiddleware, contestRoutes);

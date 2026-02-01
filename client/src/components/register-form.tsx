@@ -35,7 +35,9 @@ import { PasswordInput } from "@/components/custom/password-input";
 
 import { registerFormSchema } from "@/lib/validation-schemas";
 import { signIn } from "next-auth/react";
-import { registerUser } from "@/app/register/action";
+import { registerUser } from "@/app/register/query";
+import { useMutation } from "@tanstack/react-query";
+import { formatErrorCode, ReturnError } from "@/utils/format-response";
 
 const formSchema = registerFormSchema;
 
@@ -45,9 +47,11 @@ export default function RegisterForm({
 }: React.ComponentProps<"div">) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
+      name: "",
       confirmPassword: "",
     },
   });
@@ -55,16 +59,19 @@ export default function RegisterForm({
     await signIn("google", { redirect: false });
   }
 
+  const { mutate, isPending } = useMutation({
+    mutationFn: registerUser,
+    onSuccess: () => {
+      toast.success("Registration successful");
+      form.reset();
+    },
+    onError: (err) => {
+      toast.error(ReturnError(err));
+    },
+  });
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const res = await registerUser(values);
-      if (res.success) {
-        toast.success(res.message);
-      } else toast.error(res.message);
-    } catch (error) {
-      console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
-    }
+    mutate(values);
   }
 
   return (
@@ -117,6 +124,27 @@ export default function RegisterForm({
                 />
                 <FormField
                   control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Field>
+                        <FieldLabel htmlFor="name">Name</FieldLabel>
+                        <FormControl>
+                          <Input
+                            id="name"
+                            type="text"
+                            placeholder="John Doe"
+                            autoComplete="name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </Field>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
@@ -158,7 +186,7 @@ export default function RegisterForm({
                   )}
                 />
                 <Field>
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" disabled={isPending} className="w-full">
                     Register
                   </Button>
                   <FieldDescription className="text-center">
